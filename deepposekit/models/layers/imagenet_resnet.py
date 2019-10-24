@@ -27,7 +27,8 @@ import os
 import tensorflow.keras as keras
 from tensorflow.keras.layers import Layer
 
-from tensorflow.python.keras.applications import imagenet_utils
+import keras.applications.imagenet_utils as imagenet_utils
+# from tensorflow.python.keras.applications import imagenet_utils
 
 _obtain_input_shape = imagenet_utils.imagenet_utils._obtain_input_shape
 
