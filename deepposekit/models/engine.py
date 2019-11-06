@@ -163,7 +163,7 @@ class BaseModel:
 
         activated_callbacks = self.activate_callbacks(callbacks)
 
-        self.train_model.fit_generator(
+        history = self.train_model.fit_generator(
             generator=train_generator,
             steps_per_epoch=steps_per_epoch,
             epochs=epochs,
@@ -173,6 +173,8 @@ class BaseModel:
             validation_data=validation_generator,
             **kwargs
         )
+
+        return history
 
     def activate_callbacks(self, callbacks):
         activated_callbacks = []

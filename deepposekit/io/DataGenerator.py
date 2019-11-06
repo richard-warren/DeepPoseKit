@@ -41,7 +41,7 @@ class DataGenerator(BaseGenerator):
         Must be 'unannotated', 'annotated', or "full"
     """
 
-    def __init__(self, datapath, dataset="images", mode="annotated", **kwargs):
+    def __init__(self, datapath, dataset="images", mode="annotated", zeros_to_nan=False, **kwargs):
 
         # Check annotations file
         if isinstance(datapath, str):
@@ -88,6 +88,7 @@ class DataGenerator(BaseGenerator):
             self.index = np.arange(self.n_samples)
             self.unannotated_index = np.where(~self.annotated)[0]
             self.n_unannotated = self.unannotated_index.shape[0]
+            self.zeros_to_nan = zeros_to_nan  # if True, converts keypoints of [0,0] to [nan,nan]
 
             # Initialize skeleton attributes
             self.graph = h5file["skeleton"][:, 0]
@@ -125,7 +126,10 @@ class DataGenerator(BaseGenerator):
         keypoints = []
         with h5py.File(self.datapath, mode="r") as h5file:
             for idx in indexes:
-                keypoints.append(h5file["annotations"][idx])
+                temp = h5file["annotations"][idx]
+                if self.zeros_to_nan:
+                    temp[np.all(temp==0, axis=1)] = np.nan
+                keypoints.append(temp)
         return np.stack(keypoints)
 
     def set_keypoints(self, indexes, keypoints):
