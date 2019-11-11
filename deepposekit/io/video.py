@@ -58,8 +58,8 @@ class VideoReader(cv2.VideoCapture, Sequence):
 
         if self.pad_imgs:
             self.valid_dims = [2, 4, 6, 8, 10, 12, 14, 16, 20, 22, 24, 28, 32, 40, 44, 48, 56, 64, 80, 88, 96, 112, 128, 160, 176, 192, 224, 256, 320, 352, 384, 448, 512, 640, 704, 768, 896, 1024, 1280, 1408, 1536, 1792, 2048, 2560, 2816, 3072, 3584, 4096, 5120, 5632, 6144, 7168, 10240, 11264, 12288, 14336, 20480, 22528, 28672, 45056]
-            self.height_padded = list(filter(lambda i: i > self.height, self.valid_dims))[0]
-            self.width_padded = list(filter(lambda i: i > self.width, self.valid_dims))[0]
+            self.height_padded = list(filter(lambda i: i >= self.height, self.valid_dims))[0]
+            self.width_padded = list(filter(lambda i: i >= self.width, self.valid_dims))[0]
             print('frames will be padded to from (%i, %i) to (%i, %i)' % (self.height, self.width, self.height_padded, self.width_padded))
 
     def read(self):
