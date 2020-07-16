@@ -66,3 +66,6 @@ tmp\.txt
 tmp2\.txt
 
 examples/deepposekit-data
+
+# other
+.idea
