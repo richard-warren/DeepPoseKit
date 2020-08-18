@@ -16,7 +16,7 @@
 import numpy as np
 import cv2
 import imgaug as ia
-import ipdb
+
 
 MACHINE_EPSILON = np.finfo(np.float64).eps
 
@@ -36,6 +36,8 @@ def graph_to_edges(graph):
     edges = graph.copy()
     parents = set()
     edge = {}
+    cycles = []
+
     for idx in range(len(edges)):
         if edges[idx] == -1:
             parents.add(idx)
@@ -43,19 +45,40 @@ def graph_to_edges(graph):
             edge[idx] = edges[idx]
 
     for idx in range(len(edges)):
+        # if parent
         if idx in parents:
             edges[idx] = idx
+        
+        # if in cycle
+        elif any([idx in cycle for cycle in cycles]):
+            edges[idx] = len(graph) + np.where([idx in cycle for cycle in cycles])[0]
+            # edges[idx] = 999  # temp
+
+        # otherwise look for super-parents or new cycle
         else:
             idx0 = idx
+            is_cyclic = False
+            idx0s = []
+            
             while idx0 not in parents:
                 idx0 = edge[idx0]
-            edges[idx] = idx0
-
+                if idx0 in idx0s:  # this will happen when new cycle is detected
+                    is_cyclic = True
+                    edges[idx] = len(graph) + len(cycles)
+                    # edges[idx] = 999  # temp
+                    cycles.append(idx0s)
+                    break
+                else:
+                    idx0s.append(idx0)
+            
+            if not is_cyclic:
+                edges[idx] = idx0
     return edges
 
 
 def draw_graph(keypoints, height, width, output_shape, graph, sigma=1, linewidth=1):
     # One channel for each edge
+
     keypoints = keypoints.copy()
     edge_labels = graph_to_edges(graph)
     labels = np.unique(edge_labels)
@@ -74,7 +97,7 @@ def draw_graph(keypoints, height, width, output_shape, graph, sigma=1, linewidth
             if line >= 0:
                 pt1 = keypoints[line_idx]
                 pt2 = keypoints[line]
-                if np.all(pt1>=0) and np.all(pt2>=0):  # make sure we don't draw edge for features that are not labelled within the frame
+                if np.all(pt1>=-1000) and np.all(pt2>=-1000):  # make sure we don't draw edge for features that are -99999
                     line_map = cv2.line(
                         zeros.copy(),
                         (int(pt1[0]), int(pt1[1])),
@@ -88,7 +111,8 @@ def draw_graph(keypoints, height, width, output_shape, graph, sigma=1, linewidth
                     )
                     resized = cv2.resize(blurred, (out_width, out_height)) + MACHINE_EPSILON
                     edge_confidence[..., jdx] = resized
-        edge_confidence = edge_confidence[..., 1:]
+        # edge_confidence = edge_confidence[..., 1:]
+        edge_confidence = edge_confidence[..., lines>=0]
         edge_confidence_list.append(edge_confidence)
         confidence[..., idx] = edge_confidence.sum(-1)
     edge_confidence = np.concatenate(edge_confidence_list, -1)
