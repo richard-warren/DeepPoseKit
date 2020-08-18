@@ -1,3 +1,12 @@
+This is a fork of the excellent `DeepPoseKit` library. The following modications have been made:
+- `DeepPoseKit` does not work on frames of arbitrary dimensions. In this fork users can specify `frame_size` in the `VideoReader` class. Frames are automatically padded to `frame_size`.
+- A small bug has been fixed in which skeleton edges were drawn to connect features that are not present in specific frames.
+
+The original documentation is below.
+
+---
+
+
 <p align="center">
 <img src="https://github.com/jgraving/DeepPoseKit/blob/master/assets/deepposekit_logo.png" height="320px">
 </p>
