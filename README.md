@@ -1,6 +1,8 @@
 This is a fork of the excellent `DeepPoseKit` library. The following modications have been made:
 - `DeepPoseKit` does not work on frames of arbitrary dimensions. In this fork users can specify `frame_size` in the `VideoReader` class. Frames are automatically padded to `frame_size`.
 - A small bug has been fixed in which skeleton edges were drawn to connect features that are not present in specific frames.
+- A small bug has been fixed that prevents cyclic pose graphs from causing `DeepPoseKit` to freeze.
+- An `update_skeleton` function has been added that allows the skeleton to be updated (by adding or removing features) from an already-annotated dataset.
 
 The original documentation is below.
 

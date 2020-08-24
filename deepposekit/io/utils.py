@@ -20,7 +20,7 @@ import pandas as pd
 
 from deepposekit.io.DataGenerator import DataGenerator
 
-__all__ = ["initialize_dataset", "initialize_skeleton", "merge_new_images"]
+__all__ = ["initialize_dataset", "initialize_skeleton", "merge_new_images", "update_skeleton"]
 
 
 def initialize_skeleton(skeleton):
@@ -308,3 +308,78 @@ def merge_new_images(
 
     h5file.close()
     merged_h5file.close()
+
+
+def update_skeleton(old_dataset, new_dataset, new_skeleton):
+
+    """
+    upates the skeleton associated with old_dataset by replacing it with new_skeleton
+    saved as new_dataset
+    use to add or remove features from a dataset that has already been labeled
+
+    """
+
+    # load old data
+    with h5py.File(old_dataset, 'r') as file:
+        old_data = {key: value[...] for key, value in file.items()}
+
+    # get image characteristics
+    n_images = old_data['images'].shape[0]
+    height = old_data['images'].shape[1]
+    width = old_data['images'].shape[2]
+    n_channels = old_data['images'].shape[3]
+
+    # load new skeleton
+    skeleton = initialize_skeleton(new_skeleton)
+    skeleton_names = skeleton["name"].values
+    skeleton = skeleton[["tree", "swap_index"]].values
+    n_keypoints = skeleton.shape[0]
+
+    # create annotated and annotations tensors
+    # (copy old annotations and set new feature positions to -1)
+    annotations = -np.ones((n_images, n_keypoints, 2))
+    annotated = np.zeros((n_images, n_keypoints), dtype=bool)
+    for idx, skeleton_name in enumerate(skeleton_names):
+        old_idx = np.where(old_data['skeleton_names'] == np.array(skeleton_name, dtype='S10'))[0]
+        if len(old_idx)>0:
+            annotated[:,idx] = old_data['annotated'][:,int(old_idx)]
+            annotations[:,idx,:] = old_data['annotations'][:,int(old_idx),:]
+
+    with h5py.File(new_dataset, mode="w") as h5file:
+        # images
+        h5file.create_dataset(
+            "images",
+            shape=old_data['images'].shape,
+            dtype=np.uint8,
+            data=old_data['images'],
+            maxshape=(None,) + old_data['images'].shape[1:],
+        )
+        
+        # annotations
+        h5file.create_dataset(
+            "annotations",
+            (n_images, n_keypoints, 2),
+            dtype=np.float64,
+            data=annotations,
+            maxshape=(None,) + annotations.shape[1:],
+        )
+        
+        # annotated
+        h5file.create_dataset(
+            "annotated",
+            (n_images, n_keypoints),
+            dtype=bool,
+            data=annotated,
+            maxshape=(None,) + annotated.shape[1:],
+        )
+        
+        # skeleton
+        h5file.create_dataset("skeleton", skeleton.shape, dtype=np.int32, data=skeleton)
+        
+        # skeleton_names
+        h5file.create_dataset(
+            "skeleton_names",
+            (skeleton.shape[0],),
+            dtype="S10",
+            data=skeleton_names.astype("S10"),
+        )
