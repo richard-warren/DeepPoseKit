@@ -17,12 +17,38 @@ from tensorflow.keras.utils import Sequence
 import cv2
 import numpy as np
 import os
-import ipdb
+import time
 
-__all__ = ["VideoReader", "VideoWriter"]
+__all__ = ["VideoReaderTest", "VideoReader", "VideoWriter"]
 
 
-class VideoReader(cv2.VideoCapture, Sequence):
+class VideoReaderTest(cv2.VideoCapture):
+    """
+    instantiating VideoReader class freezes unexpectedly after repeated
+    instantiations // this minimal version of the class is used for troubleshooting
+    and replicates the errant behavior
+    """
+
+    def __init__(self, videopath):
+        print('initing')
+        super(VideoReaderTest, self).__init__(videopath)
+        print('done initing')
+        for i in range(1000):
+            temp = self.read()
+        
+        # self._read = super(VideoReaderTest, self).read
+        # self._get = super(VideoReaderTest, self).get
+        # while not self.isOpened():
+        #     pass
+    
+    def close(self):
+        print('closing')
+        self.release()
+        # while self.isOpened():
+        #     pass
+        print('done closing')
+
+class VideoReader(cv2.VideoCapture, Sequence): 
 
     """Read a video in batches.
 
@@ -60,7 +86,8 @@ class VideoReader(cv2.VideoCapture, Sequence):
         self.frame_size = frame_size  # optional size frame size // to re-size, frames will be either cropped or padded with zeros
 
         if self.frame_size is not None:
-            print('frames will be re-sized to (%i, %i)' % (self.frame_size[0], self.frame_size[1]))
+            if not (self.frame_size[0]==self.height and self.frame_size[1]==self.width):
+                print('frames will be re-sized to (%i, %i)' % (self.frame_size[0], self.frame_size[1]))        
         
     def read(self):
         """ Read one frame

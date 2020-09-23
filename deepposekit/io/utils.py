@@ -17,6 +17,7 @@ import numpy as np
 import h5py
 import os
 import pandas as pd
+import ipdb
 
 from deepposekit.io.DataGenerator import DataGenerator
 
@@ -172,8 +173,8 @@ def initialize_dataset(
         h5file.create_dataset(
             "skeleton_names",
             (skeleton.shape[0],),
-            dtype="S10",
-            data=skeleton_names.astype("S10"),
+            dtype="S32",
+            data=skeleton_names.astype("S32"),
         )
 
 
@@ -340,10 +341,14 @@ def update_skeleton(old_dataset, new_dataset, new_skeleton):
     annotations = -np.ones((n_images, n_keypoints, 2))
     annotated = np.zeros((n_images, n_keypoints), dtype=bool)
     for idx, skeleton_name in enumerate(skeleton_names):
-        old_idx = np.where(old_data['skeleton_names'] == np.array(skeleton_name, dtype='S10'))[0]
+        old_idx = np.where(old_data['skeleton_names'] == np.array(skeleton_name, dtype='S32'))[0]
         if len(old_idx)>0:
-            annotated[:,idx] = old_data['annotated'][:,int(old_idx)]
-            annotations[:,idx,:] = old_data['annotations'][:,int(old_idx),:]
+            try:
+                annotated[:,idx] = old_data['annotated'][:,int(old_idx)]
+                annotations[:,idx,:] = old_data['annotations'][:,int(old_idx),:]
+            except:
+                ipdb.set_trace()
+
 
     with h5py.File(new_dataset, mode="w") as h5file:
         # images
@@ -380,6 +385,6 @@ def update_skeleton(old_dataset, new_dataset, new_skeleton):
         h5file.create_dataset(
             "skeleton_names",
             (skeleton.shape[0],),
-            dtype="S10",
-            data=skeleton_names.astype("S10"),
+            dtype="S32",
+            data=skeleton_names.astype("S32"),
         )

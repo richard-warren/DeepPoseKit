@@ -32,7 +32,7 @@ __all__ = ["TrainingGenerator"]
 class TrainingGenerator(Sequence):
     """
     Generates data for training a model.
-    
+
     Automatically loads annotated data and produces
     augmented images and confidence maps for each keypoint.
 
@@ -41,7 +41,7 @@ class TrainingGenerator(Sequence):
     generator: deepposekit.io.BaseGenerator
         An instance of BaseGenerator (deepposekit.io.BaseGenerator) object.
         The output of the generator must be `(images, keypoints)`, where images
-        are a numpy array of shape (n_images, height, width, channels), and 
+        are a numpy array of shape (n_images, height, width, channels), and
         keypoints are a numpy array of shape (n_images, n_keypoints, 2), where
         2 is the row, column coordinates of the keypoints in each image.
     downsample_factor : int, default = 0

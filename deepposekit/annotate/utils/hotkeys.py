@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PLUS = ord("=")
-MINUS = ord("-")
+PLUS = ord("=")	    # zoom in
+MINUS = ord("-")	# zoom out
 
 W = ord("w")
 A = ord("a")

@@ -114,9 +114,11 @@ class Annotator(GUI):
         text_scale=0.15,
         shuffle_colors=True,
         refresh=100,
+        brightness=1.0
     ):
         super(GUI, self).__init__()
 
+        self.brightness = brightness
         self.window_name = "Annotation"
         self.shuffle_colors = shuffle_colors
         self._init_skeleton(skeleton)
@@ -125,7 +127,7 @@ class Annotator(GUI):
         else:
             raise ValueError("datapath file or path does not exist")
         self._init_gui(scale, text_scale, shuffle_colors, refresh)
-
+        
     def _init_data(self, datapath, dataset):
         """ Initializes the images from the .h5 file (called in init).
 
@@ -186,6 +188,9 @@ class Annotator(GUI):
 
             self.image = h5file[self.dataset][self.image_idx]
             self._check_grayscale()
+            if self.brightness!=1:
+                self.image = self.image.astype('double') * self.brightness
+                self.image = np.clip(self.image, 0, 255).astype('uint8')
             self.skeleton.loc[:, ["x", "y"]] = h5file["annotations"][self.image_idx]
             self.skeleton.loc[:, "annotated"] = h5file["annotated"][self.image_idx]
 
@@ -219,6 +224,9 @@ class Annotator(GUI):
 
             self.image = h5file[self.dataset][self.image_idx]
             self._check_grayscale()
+            if self.brightness!=1:
+                self.image = self.image.astype('double') * self.brightness
+                self.image = np.clip(self.image, 0, 255).astype('uint8')
             self.skeleton.loc[:, ["x", "y"]] = h5file["annotations"][self.image_idx]
             self.skeleton.loc[:, "annotated"] = h5file["annotated"][self.image_idx]
 
