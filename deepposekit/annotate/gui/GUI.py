@@ -275,7 +275,7 @@ class GUI:
 
         """
         self.text_locs = [
-            (int(self.canvas_size[0] * 1.025), int(self.canvas_size[1] * 0.05) * idx)
+            (int(self.canvas_size[0] * 1.025), int(self.canvas_size[1] * 0.025) * idx)
             for idx in range(1, self.n_keypoints + 2)
         ]
 
