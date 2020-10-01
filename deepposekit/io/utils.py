@@ -289,6 +289,9 @@ def merge_new_images(
     merged_h5file.create_dataset(
         "skeleton", h5file["skeleton"].shape, dtype=np.int32, data=h5file["skeleton"][:]
     )
+    merged_h5file.create_dataset(
+        "skeleton_names", h5file["skeleton_names"].shape, dtype="S32", data=h5file["skeleton_names"][:]
+    )
 
     for idx in range(h5file[dataset].shape[0]):
         merged_h5file[dataset][idx] = h5file[dataset][idx]
