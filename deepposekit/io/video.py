@@ -19,34 +19,9 @@ import numpy as np
 import os
 import time
 
-__all__ = ["VideoReaderTest", "VideoReader", "VideoWriter"]
+__all__ = ["VideoReader", "VideoWriter"]
 
 
-class VideoReaderTest(cv2.VideoCapture):
-    """
-    instantiating VideoReader class freezes unexpectedly after repeated
-    instantiations // this minimal version of the class is used for troubleshooting
-    and replicates the errant behavior
-    """
-
-    def __init__(self, videopath):
-        print('initing')
-        super(VideoReaderTest, self).__init__(videopath)
-        print('done initing')
-        for i in range(1000):
-            temp = self.read()
-        
-        # self._read = super(VideoReaderTest, self).read
-        # self._get = super(VideoReaderTest, self).get
-        # while not self.isOpened():
-        #     pass
-    
-    def close(self):
-        print('closing')
-        self.release()
-        # while self.isOpened():
-        #     pass
-        print('done closing')
 
 class VideoReader(cv2.VideoCapture, Sequence): 
 
@@ -75,7 +50,18 @@ class VideoReader(cv2.VideoCapture, Sequence):
         else:
             raise TypeError("videopath must be str")
         self.batch_size = batch_size
-        self.n_frames = int(self.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        # count true number of frames
+        # self.n_frames = int(self.get(cv2.CAP_PROP_FRAME_COUNT))  # this is fast but inaccurate
+        self.n_frames = 0
+        got_frame = True
+        while got_frame:
+            got_frame, frame = super(VideoReader, self).read()
+            if got_frame:
+                self.n_frames += 1
+        self.set(cv2.CAP_PROP_POS_FRAMES, 0)  # reset frame counter
+        
+
         self.idx = 0
         self.fps = self.get(cv2.CAP_PROP_FPS)
         self.height = int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
