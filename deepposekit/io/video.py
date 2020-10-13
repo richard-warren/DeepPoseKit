@@ -39,7 +39,7 @@ class VideoReader(cv2.VideoCapture, Sequence):
 
     # todo: add option of specifying dimensions to crop/pad to // ensure padding doesn't occur if frame is already correct dimensions
 
-    def __init__(self, videopath, batch_size=1, gray=False, frame_size=None):
+    def __init__(self, videopath, batch_size=1, gray=False, frame_size=None, fast_frame_count=False):
 
         if isinstance(videopath, str):
             if os.path.exists(videopath):
@@ -52,14 +52,16 @@ class VideoReader(cv2.VideoCapture, Sequence):
         self.batch_size = batch_size
         
         # count true number of frames
-        # self.n_frames = int(self.get(cv2.CAP_PROP_FRAME_COUNT))  # this is fast but inaccurate
-        self.n_frames = 0
-        got_frame = True
-        while got_frame:
-            got_frame, frame = super(VideoReader, self).read()
-            if got_frame:
-                self.n_frames += 1
-        self.set(cv2.CAP_PROP_POS_FRAMES, 0)  # reset frame counter
+        if fast_frame_count:
+            self.n_frames = int(self.get(cv2.CAP_PROP_FRAME_COUNT))  # this is fast but inaccurate
+        else:
+            self.n_frames = 0
+            got_frame = True
+            while got_frame:
+                got_frame, frame = super(VideoReader, self).read()
+                if got_frame:
+                    self.n_frames += 1
+            self.set(cv2.CAP_PROP_POS_FRAMES, 0)  # reset frame counter
         
 
         self.idx = 0
