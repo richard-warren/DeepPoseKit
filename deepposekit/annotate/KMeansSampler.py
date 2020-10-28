@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ipdb
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import MiniBatchKMeans
@@ -98,8 +99,9 @@ class KMeansSampler(MiniBatchKMeans):
         labels = self.predict(X)
 
         X_new, y_new = self.sample_idx(X, n_samples_per_label)
+        idxs = X_new.copy()
         X_new = X[X_new]
-        return X_new, y_new
+        return X_new, y_new, idxs
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
