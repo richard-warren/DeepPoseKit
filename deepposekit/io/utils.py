@@ -182,6 +182,8 @@ def merge_new_images(
     datapath,
     merged_datapath,
     images,
+    frame_numbers,
+    video_names,
     keypoints=None,
     dataset="images",
     overwrite=False,
@@ -189,6 +191,7 @@ def merge_new_images(
 ):
     """
     Merge new images with an annotation set
+    # todo: data type checks for frame_number and video_names + default vals if not provided
 
     Parameters
     ----------
@@ -263,55 +266,71 @@ def merge_new_images(
                 )
             )
 
-    h5file = h5py.File(datapath, mode="r")
+    with h5py.File(datapath, mode="r") as h5file, h5py.File(merged_datapath, "w") as merged_h5file:
 
-    n_samples_merged = h5file[dataset].shape[0] + images.shape[0]
+        n_samples_merged = h5file[dataset].shape[0] + images.shape[0]
 
-    merged_h5file = h5py.File(merged_datapath, "w")
-    merged_h5file.create_dataset(
-        dataset,
-        shape=(n_samples_merged,) + data_generator.image_shape,
-        dtype=np.uint8,
-        maxshape=(None,) + data_generator.image_shape,
-    )
-    merged_h5file.create_dataset(
-        "annotations",
-        shape=(n_samples_merged,) + data_generator.keypoints_shape,
-        dtype=np.float64,
-        maxshape=(None,) + data_generator.keypoints_shape,
-    )
-    merged_h5file.create_dataset(
-        "annotated",
-        (n_samples_merged, data_generator.keypoints_shape[0]),
-        dtype=bool,
-        maxshape=(None, data_generator.keypoints_shape[0]),
-    )
-    merged_h5file.create_dataset(
-        "skeleton", h5file["skeleton"].shape, dtype=np.int32, data=h5file["skeleton"][:]
-    )
-    merged_h5file.create_dataset(
-        "skeleton_names", h5file["skeleton_names"].shape, dtype="S32", data=h5file["skeleton_names"][:]
-    )
-
-    for idx in range(h5file[dataset].shape[0]):
-        merged_h5file[dataset][idx] = h5file[dataset][idx]
-        merged_h5file["annotations"][idx] = h5file["annotations"][idx]
-        merged_h5file["annotated"][idx] = h5file["annotated"][idx]
-
-    for idx in range(h5file[dataset].shape[0], n_samples_merged):
-        merged_h5file[dataset][idx] = images[idx - h5file[dataset].shape[0]]
-        if keypoints is not None:
-            merged_h5file["annotations"][idx] = keypoints[
-                idx - h5file[dataset].shape[0]
-            ]
-        else:
-            merged_h5file["annotations"][idx] = np.zeros(data_generator.keypoints_shape)
-        merged_h5file["annotated"][idx] = np.zeros(
-            data_generator.keypoints_shape[0], dtype=bool
+        merged_h5file.create_dataset(
+            dataset,  # 'images'
+            shape=(n_samples_merged,) + data_generator.image_shape,
+            dtype=np.uint8,
+            maxshape=(None,) + data_generator.image_shape,
+        )
+        merged_h5file.create_dataset(
+            "frame_number",
+            shape=(n_samples_merged,),
+            dtype=np.int,
+            maxshape=(None,)
+        )
+        merged_h5file.create_dataset(
+            "video_name",
+            shape=(n_samples_merged,),
+            dtype="S64",
+            maxshape=(None,)
+        )
+        merged_h5file.create_dataset(
+            "annotations",
+            shape=(n_samples_merged,) + data_generator.keypoints_shape,
+            dtype=np.float64,
+            maxshape=(None,) + data_generator.keypoints_shape,
+        )
+        merged_h5file.create_dataset(
+            "annotated",
+            (n_samples_merged, data_generator.keypoints_shape[0]),
+            dtype=bool,
+            maxshape=(None, data_generator.keypoints_shape[0]),
+        )
+        merged_h5file.create_dataset(
+            "skeleton", h5file["skeleton"].shape, dtype=np.int32, data=h5file["skeleton"][:]
+        )
+        merged_h5file.create_dataset(
+            "skeleton_names", h5file["skeleton_names"].shape, dtype="S32", data=h5file["skeleton_names"][:]
         )
 
-    h5file.close()
-    merged_h5file.close()
+        # copy old datsets
+        for idx in range(h5file[dataset].shape[0]):
+            merged_h5file[dataset][idx] = h5file[dataset][idx]
+            merged_h5file["video_name"][idx] = h5file["video_name"][idx]
+            merged_h5file["frame_number"][idx] = h5file["frame_number"][idx]
+            merged_h5file["annotations"][idx] = h5file["annotations"][idx]
+            merged_h5file["annotated"][idx] = h5file["annotated"][idx]
+
+        # add new data
+        for idx in range(h5file[dataset].shape[0], n_samples_merged):
+            new_idx = idx - h5file[dataset].shape[0]
+
+            merged_h5file[dataset][idx] = images[new_idx]
+            merged_h5file["video_name"][idx] = np.array(video_names[new_idx], dtype='S64')
+            merged_h5file["frame_number"][idx] = frame_numbers[new_idx]
+            
+            if keypoints is not None:
+                merged_h5file["annotations"][idx] = keypoints[new_idx]
+            else:
+                merged_h5file["annotations"][idx] = np.zeros(data_generator.keypoints_shape)
+            merged_h5file["annotated"][idx] = np.zeros(
+                data_generator.keypoints_shape[0], dtype=bool
+            )
+
 
 
 def update_skeleton(old_dataset, new_dataset, new_skeleton):
